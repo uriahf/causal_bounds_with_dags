@@ -1,6 +1,5 @@
 project:
   title: "causal_bounds_with_dags"
-  resources: ["fonts"]
 
 editor: visual
 
