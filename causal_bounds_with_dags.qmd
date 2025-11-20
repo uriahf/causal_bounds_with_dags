@@ -1,11 +1,762 @@
 ---
-title: "causal_bounds_with_dags"
+title: "Causal Bounds for Observational Data with Pure Mediators"
+author: "Uriah Finkel"
+format: revealjs
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+## Causal Question {.smaller}
 
 ```{r}
-1 + 1
+#| echo: false
+
+library(reactable)
+library(dplyr)
 ```
+
+::::: columns
+::: {.column width="50%"}
+What are the bounds on the Individual Treatment Effect (ITE) of smoking 🚬 vs. not smoking 🚭 on COPD 🫁, given TAR as a pure mediator ⚫
+
+```{mermaid}
+
+flowchart LR
+    classDef smoker fill:#F5F2EB,stroke-width:2px,color:#001F3F;
+    classDef tar fill:#F5F2EB,stroke-width:2px,color:#001F3F;
+    classDef copd fill:#F5F2EB,stroke-width:2px,color:#001F3F;
+
+    A["Smoking<br>🚬<br><br><span style='font-size:28px; font-weight:900;'>A</span>"]:::smoker --> 
+    B["TAR<br>⚫<br><br><span style='font-size:28px; font-weight:900;'>M</span>"]:::tar
+
+    B:::tar --> 
+    C["COPD<br>🫁<br><br><span style='font-size:28px; font-weight:900;'>Y</span>"]:::copd
+
+    linkStyle 0 stroke:#001F3F,stroke-width:2px
+    linkStyle 1 stroke:#001F3F,stroke-width:2px
+
+
+```
+
+:::
+
+::: {.column width="50%"}
+![](causal_mediation_tar.png){width="341"}
+:::
+
+
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+countefactual_data <- tibble::tribble(
+   ~"X", ~"A", ~"Y_a0", ~"Y_a1", ~"M_a0", ~"M_a1",
+   "0", "1", "0", "1", "0", "1",
+   "0", "1", "0", "0", "0", "0",
+   "0", "0", "1", "1", "1", "1",
+   "0", "0", "0", "1", "0", "1",
+   "0", "0", "0", "0", "0", "0",
+   "0", "0", "0", "0", "0", "0", 
+   "1", "1", "1", "1", "1", "1",
+   "1", "1", "1", "1", "1", "1",
+   "1", "1", "1", "1", "1", "1",
+   "1", "1", "1", "1", "0", "0", 
+   "1", "1", "1", "1", "1", "1",
+   "1", "1", "0", "1", "0", "1",
+   "1", "1", "0", "0", "0", "0",
+   "1", "1", "0", "0", "0", "0", 
+   "1", "0", "1", "1", "1", "1",
+   "1", "0", "0", "1", "0", "1"
+  ) |> 
+  mutate(
+    observed_y = case_when(
+      A == "0" ~ Y_a0,
+      A == "1" ~ Y_a1
+    ),
+    ITE = as.numeric(Y_a1) - as.numeric(Y_a0)
+  ) |> 
+  arrange(
+    A, observed_y, X
+  ) |> 
+  select(X, A, M_a0, M_a1, Y_a0, Y_a1, ITE) |> 
+  mutate(
+    observed_m = case_when(
+      A == "0" ~ M_a0,
+      A == "1" ~ M_a1
+    ),
+    observed_y = case_when(
+      A == "0" ~ Y_a0,
+      A == "1" ~ Y_a1
+    )
+  ) |> 
+  arrange(
+    A, observed_y, X
+  )
+```
+
+```{r}
+countefactual_data_reactable_raw <- countefactual_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      show = FALSE
+    ),
+    observed_m = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    ),
+    M_a0 = colDef(
+      show = FALSE
+    ),
+    M_a1 = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      name = "Y<sup>0",
+      html = TRUE,
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    ),
+    Y_a1 = colDef(
+      name = "Y<sup>1",
+      html = TRUE,
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+#### 😇 God-Given Counterfactual Data
+
+-   By God-Given knowledge we have access to the true counterfactual outcomes for each individual for smoking 🚬 and for not smoking 🚭. The potential outcomes are by definition different for Responders.
+
+:::
+
+$$ \text{PNS} = \text{p( Y=1 | do(A=1), Y=0 | do(A=0) )} = \frac{1}{4} $$
+
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+countefactual_data_reactable_raw <- countefactual_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      show = FALSE
+    ),
+    observed_m = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    ),
+    Y_a0 = colDef(
+      name = "Y<sup>0",
+      html = TRUE,
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    ),
+    M_a1 = colDef(
+      name = "M<sup>1",
+      html = TRUE,
+      style = function(value) {
+      if(value == "1")
+      list(background = "lightgray")
+    }
+    ),
+    M_a0 = colDef(
+      name = "M<sup>0",
+      html = TRUE,
+      style = function(value) {
+      if(value == "1")
+      list(background = "lightgray")
+    }
+    ),
+    Y_a1 = colDef(
+      name = "Y<sup>1",
+      html = TRUE,
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+#### 😇 God-Given Counterfactual Data
+
+-   By God-Given knowledge we have access to the true counterfactual outcomes for each individual for smoking 🚬 and for not smoking 🚭. The potential outcomes are by definition different for Responders.
+
+-   In case of pure mediation, the potential outcomes of the mediator must be different as well: In other words smoking cause COPD only through TAR.
+
+
+
+:::
+
+$$\small{ \text{PNS} = \text{p( Y=1 | do(M=1), M=1 | do(A=1), Y=0 | do(M=0), M=0 | do(A=0)  )} = \frac{1}{4} }$$
+
+:::::
+
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+countefactual_data_reactable_raw <- countefactual_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      name = "Y",
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    ),
+    observed_m = colDef(
+      name = "M",
+      style = function(value) {
+      if(value == "1")
+      list(background = "lightgray")
+    }
+    ),
+    ITE = colDef(
+     show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    M_a1 = colDef(
+      show = FALSE
+    ),
+    M_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+
+####  😈 Observed Data
+
+In real life we can analyse only the observed outcomes and observed mediators, so we can never know the true Individual Treatment Effect. But fortunately, we can use Causal Bounds taking modifiers into consideration.
+
+:::
+:::::
+
+# Population Level Bounds
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+
+countefactual_data_reactable_raw <- countefactual_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      name = "Y",
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    ),
+    observed_m = colDef(
+      name = "M",
+      style = function(value) {
+      if(value == "1")
+      list(background = "lightgray")
+    }
+    ),
+    A = colDef(
+      style = function(value) {
+      if (value == "1")
+      list(background = "#F2F3AE")
+      } 
+    ),
+    ITE = colDef(
+     show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    M_a1 = colDef(
+      show = FALSE
+    ),
+    M_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    x = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+#### Bounds PNS
+
+$$ 0 \le \text{PNS} \le$$
+
+-   In order to bound PNS we need to count the possible proportion of Responders:
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+
+countefactual_data_reactable_raw <- countefactual_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_m = colDef(
+      name = "M",
+        style = function(value, index, name) {
+          style <- if (value == "1") {
+            list(background = "lightgray")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data$A[index]
+          Y_value <- countefactual_data$observed_y[index]
+          if ((A_value == "0") && (value == "0") && (Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+    ),
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data$A[index]
+          M_value <- countefactual_data$observed_m[index]
+          if (A_value == "0" && value == "0" && M_value == "0") {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data$observed_y[index]
+          M_value <- countefactual_data$observed_m[index]
+          if ((value == "0") && (Y_value == "0") && (M_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    ITE = colDef(
+     show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    M_a1 = colDef(
+      show = FALSE
+    ),
+    M_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    x = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+#### Bounds PNS
+
+$$ 0 \le \text{PNS} \le \frac{4}{16} +$$
+
+-   In order to bound PNS we need to count the possible proportion of Responders:
+
+-   The total number of observed non-events without treatment and without TAR, they might be Responders or Immuned.
+
+
+
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+
+countefactual_data_reactable_raw <- countefactual_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_m = colDef(
+      name = "M",
+        style = function(value, index, name) {
+          style <- if (value == "1") {
+            list(background = "lightgray")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data$A[index]
+          Y_value <- countefactual_data$observed_y[index]
+          if ((A_value == "1") && (value == "1") && (Y_value == "1")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+    ),
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data$A[index]
+          M_value <- countefactual_data$observed_m[index]
+          if (A_value == "1" && value == "1" && M_value == "1") {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data$observed_y[index]
+          M_value <- countefactual_data$observed_m[index]
+          if ((value == "1") && (Y_value == "1") && (M_value == "1")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    ITE = colDef(
+     show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    M_a1 = colDef(
+      show = FALSE
+    ),
+    M_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    x = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+#### Bounds PNS
+
+$$ 0 \le \text{PNS} \le \frac{4}{16} + \frac{6}{16}$$
+
+-   In order to bound PNS we need to count the possible proportion of Responders:
+
+-   The total number of observed non-events without treatment and without TAR, they might be Responders or Immuned.
+
+-   The total number of observed events with treatment and with TAR, they might be Responders or Lost-Causes.
+
+
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+
+countefactual_data_reactable_raw <- countefactual_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_m = colDef(
+      name = "M",
+        style = function(value, index, name) {
+          style <- if (value == "1") {
+            list(background = "lightgray")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data$A[index]
+          Y_value <- countefactual_data$observed_y[index]
+          if (((A_value == "1") && (value == "1") && (Y_value == "1")) | ((A_value == "0") && (value == "0") && (Y_value == "0"))) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+    ),
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data$A[index]
+          M_value <- countefactual_data$observed_m[index]
+          if ((A_value == "1" && value == "1" && M_value == "1") | (A_value == "0" && value == "0" && M_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data$observed_y[index]
+          M_value <- countefactual_data$observed_m[index]
+          if (((value == "1") && (Y_value == "1") && (M_value == "1")) | ((value == "0") && (Y_value == "0") && (M_value == "0"))) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    ITE = colDef(
+     show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    M_a1 = colDef(
+      show = FALSE
+    ),
+    M_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    x = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+#### Bounds PNS
+
+$$ 0 \le \text{PNS} \le \frac{11}{16} $$ Now we know the bounds of the PNS.
+
+It resonates with our true "God-Given" PNS:
+
+$$ 0 \le \text{PNS} = \frac{4}{16} \le \frac{10}{16} $$
+
+:::
+:::::
