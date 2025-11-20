@@ -1,9 +1,17 @@
 project:
-  title: "causal_bounds_with_dags"
-  resources: ["fonts"]
+  type: website
+  title: "causal_bounds_smoking_example"
+  output-dir: _site
+  resources:
+    - fonts
 
-editor: visual
+brand: _brand.yml
 
 format:
   revealjs:
     theme: [default, custom-fonts.scss]
+    transition: none
+    background-transition: none
+    pdf-separate-fragments: false
+    lang: en
+    auto-stretch: true
