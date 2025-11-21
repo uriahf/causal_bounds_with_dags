@@ -3,15 +3,15 @@
 /* Register your local fonts */
 @font-face {
   font-family: "CommissionerLocal";
-  src: url("fonts/commissioner-v13-latin-regular.woff2") format("woff2"),
-       url("fonts/commissioner-v13-latin-regular.woff") format("woff");
+  src: url("../../../fonts/commissioner-v13-latin-regular.woff2") format("woff2"),
+       url("../../../fonts/commissioner-v13-latin-regular.woff") format("woff");
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: "FrauncesLocal";
-  src: url("fonts/Fraunces9pt-Light.woff2") format("woff2");
+  src: url("../../../fonts/Fraunces9pt-Light.woff2") format("woff2");
   font-weight: 300;
   font-style: normal;
 }
