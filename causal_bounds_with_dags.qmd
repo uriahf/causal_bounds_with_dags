@@ -752,7 +752,7 @@ countefactual_data_reactable_raw
 ::: {.column width="65%"}
 #### Bounds PNS
 
-$$ 0 \le \text{PNS} \le \frac{11}{16} $$ Now we know the bounds of the PNS.
+$$ 0 \le \text{PNS} \le \frac{10}{16} $$ Now we know the bounds of the PNS.
 
 It resonates with our true "God-Given" PNS:
 
