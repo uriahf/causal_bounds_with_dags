@@ -3,6 +3,15 @@ title: "Causal Bounds for Observational Data with Pure Mediators"
 author: "Uriah Finkel"
 description: "Slides exploring bounds on the individual treatment effect of smoking on COPD when TAR acts as a pure mediator."
 image: causal_mediation_tar.png
+metadata:
+  og:title: "Causal Bounds for Observational Data with Pure Mediators"
+  og:description: "Slide deck on bounding the individual treatment effect of smoking on COPD when TAR is a pure mediator."
+  og:image: https://causalbounds-puremediators.netlify.app/causal_mediation_tar.png
+  og:type: article
+  twitter:card: summary_large_image
+  twitter:title: "Causal Bounds for Observational Data with Pure Mediators"
+  twitter:description: "Slide deck on bounding the individual treatment effect of smoking on COPD when TAR is a pure mediator."
+  twitter:image: https://causalbounds-puremediators.netlify.app/causal_mediation_tar.png
 format: revealjs
 ---
 
