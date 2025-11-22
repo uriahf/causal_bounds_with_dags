@@ -1,1 +1,1 @@
-Sitemap: https://uriahf.github.io/causal_bounds_with_dags/sitemap.xml
+Sitemap: https://causalbounds-puremediators.netlify.app/sitemap.xml
