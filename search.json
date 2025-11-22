@@ -4,6 +4,13 @@
     "href": "causal_bounds_with_dags.html#causal-question",
     "title": "Causal Bounds for Observational Data with Pure Mediators",
     "section": "Causal Question",
+    "text": "Causal Question\n\n\n\n\nWhat are the bounds on the Individual Treatment Effect (ITE) of smoking 🚬 vs. not smoking 🚭 on COPD 🫁, given TAR as a pure mediator ⚫"
+  },
+  {
+    "objectID": "causal_bounds_with_dags.html#causal-question-1",
+    "href": "causal_bounds_with_dags.html#causal-question-1",
+    "title": "Causal Bounds for Observational Data with Pure Mediators",
+    "section": "Causal Question",
     "text": "Causal Question\n\n\n\n\nWhat are the bounds on the Individual Treatment Effect (ITE) of smoking 🚬 vs. not smoking 🚭 on COPD 🫁, given TAR as a pure mediator ⚫\n\n\n\n\n\nflowchart LR\n    classDef smoker fill:#F5F2EB,stroke-width:2px,color:#001F3F;\n    classDef tar fill:#F5F2EB,stroke-width:2px,color:#001F3F;\n    classDef copd fill:#F5F2EB,stroke-width:2px,color:#001F3F;\n\n    A[\"Smoking&lt;br&gt;🚬&lt;br&gt;&lt;br&gt;&lt;span style='font-size:28px; font-weight:900;'&gt;A&lt;/span&gt;\"]:::smoker --&gt; \n    B[\"TAR&lt;br&gt;⚫&lt;br&gt;&lt;br&gt;&lt;span style='font-size:28px; font-weight:900;'&gt;M&lt;/span&gt;\"]:::tar\n\n    B:::tar --&gt; \n    C[\"COPD&lt;br&gt;🫁&lt;br&gt;&lt;br&gt;&lt;span style='font-size:28px; font-weight:900;'&gt;Y&lt;/span&gt;\"]:::copd\n\n    linkStyle 0 stroke:#001F3F,stroke-width:2px\n    linkStyle 1 stroke:#001F3F,stroke-width:2px"
   },
   {
