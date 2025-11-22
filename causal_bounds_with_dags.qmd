@@ -25,6 +25,11 @@ library(dplyr)
 ```
 
 ::::: columns
+
+::: {.column width="50%"}
+![](causal_mediation_tar.png){width="341"}
+:::
+
 ::: {.column width="50%"}
 What are the bounds on the Individual Treatment Effect (ITE) of smoking 🚬 vs. not smoking 🚭 on COPD 🫁, given TAR as a pure mediator ⚫
 
@@ -49,9 +54,7 @@ flowchart LR
 
 :::
 
-::: {.column width="50%"}
-![](causal_mediation_tar.png){width="341"}
-:::
+
 
 
 :::::
