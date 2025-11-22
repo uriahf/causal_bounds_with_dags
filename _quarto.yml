@@ -5,6 +5,8 @@ project:
   resources:
     - fonts
     - causal_mediation_tar.png
+
+website:
   site-url: https://causalbounds-puremediators.netlify.app
 
 brand: _brand.yml
