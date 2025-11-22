@@ -1,6 +1,8 @@
 ---
 title: "Causal Bounds for Observational Data with Pure Mediators"
 author: "Uriah Finkel"
+description: "Slides exploring bounds on the individual treatment effect of smoking on COPD when TAR acts as a pure mediator."
+image: causal_mediation_tar.png
 format: revealjs
 ---
 
